@@ -1,0 +1,140 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+}
+
+enum CategoryType {
+  EXPENSE
+  INCOME
+  BOTH
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  ONE_TIMECategoryType
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  preferredCurrency String   @default("PLN")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  categories     Category[]
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+  merchants      Merchant[]
+}
+
+model Category {
+  id        String          @id @default(cuid())
+  name      String
+  type      TransactionType // EXPENSE, INCOME
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  userId    String
+
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id             String          @id @default(cuid())
+  amount         Float
+  currency       String
+  spread         Float?          @default(0) // Percentage spread (e.g., 2.5 for 2.5%)
+  date           DateTime
+  description    String?
+  notes          String?
+  attachmentPath String?
+  type           TransactionType // EXPENSE, INCOME
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  recurringRuleId String?
+  recurringRule   RecurringRule? @relation(fields: [recurringRuleId], references: [id])
+
+  merchantId String?
+  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RecurringRule {
+  id          String          @id @default(cuid())
+  frequency   Frequency // DAILY, WEEKLY, MONTHLY, YEARLY
+  interval    Int             @default(1)
+  amount      Float
+  currency    String
+  spread      Float?          @default(0)
+  type        TransactionType // EXPENSE, INCOME
+  startDate   DateTime
+  endDate     DateTime?
+  occurrences Int? // Stop after N occurrences
+
+  description String?
+  notes       String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  merchantId String?
+  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+
+  isActive     Boolean       @default(true)
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Merchant {
+  id   String @id @default(cuid())
+  name String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+}
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  date      DateTime // effective date (UTC, start of day)
+  currency  String // e.g., "USD", "EUR", "GBP"
+  rate      Float // rate to PLN (1 unit of currency = X PLN)
+  createdAt DateTime @default(now())
+
+  @@unique([date, currency])
+}
