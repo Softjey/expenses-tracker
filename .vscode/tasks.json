@@ -1,0 +1,60 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "delete_migrations",
+			"type": "shell",
+			"command": "rm -rf prisma/migrations dev.db"
+		},
+		{
+			"label": "prisma_migrate",
+			"type": "shell",
+			"command": "npx prisma migrate dev --name init_postgres"
+		},
+		{
+			"label": "prisma_migrate_v2",
+			"type": "shell",
+			"command": "rm -rf prisma/migrations && npx prisma migrate dev --name init_postgres"
+		},
+		{
+			"label": "run_migration_script",
+			"type": "shell",
+			"command": "chmod +x migrate.sh && ./migrate.sh"
+		},
+		{
+			"label": "prisma_migrate_final",
+			"type": "shell",
+			"command": "rm -rf prisma/migrations dev.db && npx prisma migrate dev --name init_postgres"
+		},
+		{
+			"label": "remove_schema",
+			"type": "shell",
+			"command": "rm prisma/schema.prisma"
+		},
+		{
+			"label": "clean_db",
+			"type": "shell",
+			"command": "rm -rf prisma/migrations dev.db"
+		},
+		{
+			"label": "delete_schema_file",
+			"type": "shell",
+			"command": "rm prisma/schema.prisma"
+		},
+		{
+			"label": "force_clean",
+			"type": "shell",
+			"command": "rm -rf prisma/migrations dev.db"
+		},
+		{
+			"label": "move_migrations",
+			"type": "shell",
+			"command": "mv prisma/migrations prisma/migrations_old"
+		},
+		{
+			"label": "run_clean_migrations",
+			"type": "shell",
+			"command": "node scripts/clean-migrations.js"
+		}
+	]
+}
