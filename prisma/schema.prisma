@@ -23,7 +23,7 @@ enum Frequency {
   WEEKLY
   MONTHLY
   YEARLY
-  ONE_TIMECategoryType
+  ONE_TIME
 }
 
 model User {

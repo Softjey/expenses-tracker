@@ -149,7 +149,7 @@ export default function Home() {
                   }
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-45">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -166,7 +166,7 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle>Expenses by Category</CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
+                <CardContent className="h-75">
                   {data?.expensesByCategory.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -203,7 +203,7 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle>Income by Category</CardTitle>
                 </CardHeader>
-                <CardContent className="h-[300px]">
+                <CardContent className="h-75">
                   {data?.incomeByCategory.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>

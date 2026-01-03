@@ -181,12 +181,17 @@ export default function RecurringPage() {
   useEffect(() => {
     if (editingRule) {
       form.reset({
-        frequency: editingRule.frequency as any,
+        frequency: editingRule.frequency as
+          | "DAILY"
+          | "WEEKLY"
+          | "MONTHLY"
+          | "YEARLY",
         interval: editingRule.interval,
         amount: editingRule.amount,
         currency: editingRule.currency,
-        spread: (editingRule as any).spread || 0,
-        type: editingRule.type as any,
+        spread:
+          (editingRule as RecurringRule & { spread?: number }).spread || 0,
+        type: editingRule.type as "EXPENSE" | "INCOME",
         startDate: new Date(editingRule.startDate),
         endDate: editingRule.endDate
           ? new Date(editingRule.endDate)
@@ -233,10 +238,12 @@ export default function RecurringPage() {
       if (res.ok) {
         const data = await res.json();
         // Parse dates
-        const parsed = data.map((occ: any) => ({
-          ...occ,
-          date: new Date(occ.date),
-        }));
+        const parsed = data.map(
+          (occ: RecurringOccurrence & { date: string }) => ({
+            ...occ,
+            date: new Date(occ.date),
+          })
+        );
         setOccurrences(parsed);
       }
     } catch (error) {
@@ -305,7 +312,7 @@ export default function RecurringPage() {
     if (!rule) return;
 
     form.reset({
-      type: rule.type as any,
+      type: rule.type as "EXPENSE" | "INCOME",
       amount: occurrence.amount,
       currency: occurrence.currency,
       description: occurrence.description,
@@ -624,7 +631,7 @@ export default function RecurringPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Rule
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingRule ? "Edit Rule" : "Create Recurring Rule"}

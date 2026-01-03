@@ -141,7 +141,7 @@ export default function StatisticsPage() {
               }
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-45">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
             <SelectContent>
@@ -162,7 +162,7 @@ export default function StatisticsPage() {
             Expenses over time ({data?.isMonthlyView ? "Monthly" : "Daily"})
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-[400px]">
+        <CardContent className="h-100">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data?.spendingTrend}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -177,8 +177,8 @@ export default function StatisticsPage() {
               />
               <YAxis />
               <Tooltip
-                formatter={(value: number) => [
-                  `${symbol}${value.toFixed(2)}`,
+                formatter={(value: number | undefined) => [
+                  `${symbol}${(value ?? 0).toFixed(2)}`,
                   "Amount",
                 ]}
                 labelFormatter={(label) => {
@@ -209,7 +209,7 @@ export default function StatisticsPage() {
             <CardTitle>Expenses by Category</CardTitle>
             <CardDescription>Distribution of your spending</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className="h-100">
             {data?.expensesByCategory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -219,7 +219,7 @@ export default function StatisticsPage() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
+                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
                     }
                     outerRadius={120}
                     fill="#8884d8"
@@ -235,8 +235,8 @@ export default function StatisticsPage() {
                     )}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [
-                      `${symbol}${value.toFixed(2)}`,
+                    formatter={(value: number | undefined) => [
+                      `${symbol}${(value ?? 0).toFixed(2)}`,
                       "Amount",
                     ]}
                   />
@@ -256,7 +256,7 @@ export default function StatisticsPage() {
             <CardTitle>Income Sources</CardTitle>
             <CardDescription>Where your money comes from</CardDescription>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className="h-100">
             {data?.incomeByCategory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -266,7 +266,7 @@ export default function StatisticsPage() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
+                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
                     }
                     outerRadius={120}
                     fill="#82ca9d"
@@ -280,8 +280,8 @@ export default function StatisticsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [
-                      `${symbol}${value.toFixed(2)}`,
+                    formatter={(value: number | undefined) => [
+                      `${symbol}${(value ?? 0).toFixed(2)}`,
                       "Amount",
                     ]}
                   />
@@ -302,7 +302,7 @@ export default function StatisticsPage() {
           <CardTitle>Top Merchants</CardTitle>
           <CardDescription>Where you spend the most (Top 10)</CardDescription>
         </CardHeader>
-        <CardContent className="h-[400px]">
+        <CardContent className="h-100">
           {data?.expensesByMerchant.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -314,8 +314,8 @@ export default function StatisticsPage() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} />
                 <Tooltip
-                  formatter={(value: number) => [
-                    `${symbol}${value.toFixed(2)}`,
+                  formatter={(value: number | undefined) => [
+                    `${symbol}${(value ?? 0).toFixed(2)}`,
                     "Amount",
                   ]}
                 />

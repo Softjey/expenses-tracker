@@ -199,7 +199,7 @@ export default function TransactionsPage() {
   }
 
   const filteredCategories = categories.filter(
-    (c) => c.type === "BOTH" || c.type === form.watch("type")
+    (c) => c.type === form.watch("type")
   );
 
   return (

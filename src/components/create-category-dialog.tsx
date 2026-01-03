@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -14,30 +14,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  type: z.enum(["EXPENSE", "INCOME", "BOTH"]),
-})
+  type: z.enum(["EXPENSE", "INCOME"]),
+});
 
-import type { Category } from "@prisma/client"
+import type { Category } from "@prisma/client";
 
 interface CreateCategoryDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: (category: Category) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: (category: Category) => void;
 }
 
 export function CreateCategoryDialog({
@@ -51,7 +51,7 @@ export function CreateCategoryDialog({
       name: "",
       type: "EXPENSE",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -59,15 +59,15 @@ export function CreateCategoryDialog({
         method: "POST",
         body: JSON.stringify(values),
         headers: { "Content-Type": "application/json" },
-      })
+      });
       if (res.ok) {
-        const category = await res.json()
-        onSuccess(category)
-        onOpenChange(false)
-        form.reset()
+        const category = await res.json();
+        onSuccess(category);
+        onOpenChange(false);
+        form.reset();
       }
     } catch (error) {
-      console.error("Failed to create category", error)
+      console.error("Failed to create category", error);
     }
   }
 
@@ -110,7 +110,6 @@ export function CreateCategoryDialog({
                     <SelectContent>
                       <SelectItem value="EXPENSE">Expense</SelectItem>
                       <SelectItem value="INCOME">Income</SelectItem>
-                      <SelectItem value="BOTH">Both</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -124,5 +123,5 @@ export function CreateCategoryDialog({
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

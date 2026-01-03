@@ -5,7 +5,7 @@ CREATE TYPE "TransactionType" AS ENUM ('EXPENSE', 'INCOME');
 CREATE TYPE "CategoryType" AS ENUM ('EXPENSE', 'INCOME', 'BOTH');
 
 -- CreateEnum
-CREATE TYPE "Frequency" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'ONE_TIMECategoryType');
+CREATE TYPE "Frequency" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'ONE_TIME');
 
 -- CreateTable
 CREATE TABLE "User" (
