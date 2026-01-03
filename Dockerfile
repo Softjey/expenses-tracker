@@ -26,6 +26,8 @@ WORKDIR /app
 
 # Set environment to production
 ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
 
 # Accept build-time environment variables
 ARG DATABASE_URL
@@ -49,4 +51,4 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
 
 # Start the application with migrations
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node_modules/.bin/next start -H 0.0.0.0 -p ${PORT:-3000}"]
