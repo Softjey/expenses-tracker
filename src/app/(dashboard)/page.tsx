@@ -14,12 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DateRangeSelector,
+  DateRangeType,
+} from "@/components/date-range-selector";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 export default function Home() {
   const { data: session } = useSession();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<string>("PLN");
+  const [rangeType, setRangeType] = useState<DateRangeType>("current_month");
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
 
   useEffect(() => {
     if (session) {
@@ -31,7 +41,7 @@ export default function Home() {
     if (session && currency) {
       fetchAnalytics();
     }
-  }, [session, currency]);
+  }, [session, currency, dateRange]);
 
   async function fetchPreferences() {
     try {
@@ -46,8 +56,17 @@ export default function Home() {
   }
 
   async function fetchAnalytics() {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/analytics?currency=${currency}`);
+      const params = new URLSearchParams({ currency });
+      if (rangeType === "all") {
+        params.append("from", "all");
+      } else if (dateRange.from && dateRange.to) {
+        params.append("from", dateRange.from.toISOString());
+        params.append("to", dateRange.to.toISOString());
+      }
+
+      const res = await fetch(`/api/analytics?${params}`);
       const json = await res.json();
       setData(json);
     } catch (error) {
@@ -133,7 +152,14 @@ export default function Home() {
               </Card>
             </div>
 
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex justify-end gap-4">
+              <DateRangeSelector
+                value={rangeType}
+                onChange={(type, range) => {
+                  setRangeType(type);
+                  setDateRange(range);
+                }}
+              />
               <Select
                 value={currency}
                 onValueChange={async (val) => {

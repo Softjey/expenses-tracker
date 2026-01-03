@@ -32,18 +32,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { DatePickerWithRange } from "@/components/date-range-picker";
 import { DateRange } from "react-day-picker";
+import {
+  DateRangeSelector,
+  DateRangeType,
+} from "@/components/date-range-selector";
 
 export default function StatisticsPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<string>("PLN");
+  const [rangeType, setRangeType] = useState<DateRangeType>("current_month");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
   });
 
   useEffect(() => {
@@ -53,10 +58,14 @@ export default function StatisticsPage() {
   }, [session]);
 
   useEffect(() => {
-    if (session && currency && dateRange?.from && dateRange?.to) {
+    if (
+      session &&
+      currency &&
+      (rangeType === "all" || (dateRange?.from && dateRange?.to))
+    ) {
       fetchAnalytics();
     }
-  }, [session, currency, dateRange]);
+  }, [session, currency, dateRange, rangeType]);
 
   async function fetchPreferences() {
     try {
@@ -71,15 +80,23 @@ export default function StatisticsPage() {
   }
 
   async function fetchAnalytics() {
-    if (!dateRange?.from || !dateRange?.to) return;
-
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        currency,
-        from: dateRange.from.toISOString(),
-        to: dateRange.to.toISOString(),
-      });
+      const params = new URLSearchParams({ currency });
+      if (rangeType === "all") {
+        params.append("from", "all");
+      } else if (dateRange?.from && dateRange?.to) {
+        params.append("from", dateRange.from.toISOString());
+        params.append("to", dateRange.to.toISOString());
+      } else if (dateRange?.from) {
+        // If only from is selected, maybe just show from that date onwards
+        params.append("from", dateRange.from.toISOString());
+        params.append("to", new Date().toISOString());
+      } else {
+        // Default to current month if nothing is selected and not "all"
+        // But we initialized it to current month, so this shouldn't happen often
+      }
+
       const res = await fetch(`/api/analytics?${params}`);
       const json = await res.json();
       setData(json);
@@ -125,7 +142,24 @@ export default function StatisticsPage() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Statistics</h1>
         <div className="flex items-center gap-4">
-          <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+          <DateRangeSelector
+            value={rangeType}
+            onChange={(type, range) => {
+              setRangeType(type);
+              if (type !== "all") {
+                setDateRange({ from: range.from, to: range.to });
+              }
+            }}
+          />
+          <DatePickerWithRange
+            date={dateRange}
+            setDate={(range) => {
+              setDateRange(range);
+              if (range?.from || range?.to) {
+                setRangeType("custom");
+              }
+            }}
+          />
           <Select
             value={currency}
             onValueChange={async (val) => {

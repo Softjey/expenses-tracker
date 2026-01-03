@@ -31,10 +31,13 @@ export async function GET(req: Request) {
 
     // Determine date range
     const now = new Date();
-    let startDate: Date;
-    let endDate: Date;
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
 
-    if (fromParam && toParam) {
+    if (fromParam === "all") {
+      startDate = undefined;
+      endDate = undefined;
+    } else if (fromParam && toParam) {
       startDate = new Date(fromParam);
       endDate = new Date(toParam);
       // Set end date to end of day
@@ -47,14 +50,19 @@ export async function GET(req: Request) {
     }
 
     // Fetch all transactions for the range
+    const where: any = {
+      userId: user.id,
+    };
+
+    if (startDate && endDate) {
+      where.date = {
+        gte: startDate,
+        lte: endDate,
+      };
+    }
+
     const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: user.id,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
+      where,
       include: {
         category: true,
         merchant: true,
