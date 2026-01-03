@@ -13,8 +13,15 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Accept build-time environment variables
+ARG DATABASE_URL
+ARG NEXTAUTH_SECRET
+ARG NEXTAUTH_URL
+
 # Generate Prisma Client
 RUN npx prisma generate
+
+RUN npx prisma migrate deploy
 
 # Build the Next.js application
 RUN npm run build
@@ -51,4 +58,4 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
 
 # Start the application with migrations
-CMD ["sh", "-c", "npx prisma migrate deploy && node_modules/.bin/next start -H 0.0.0.0 -p ${PORT:-3000}"]
+CMD ["sh", "-c", "node_modules/.bin/next start -H 0.0.0.0 -p ${PORT:-3000}"]
