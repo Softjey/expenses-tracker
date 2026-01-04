@@ -12,6 +12,8 @@ const bulkTransactionSchema = z.array(
   z.object({
     amount: z.number().positive(),
     currency: z.string().length(3),
+    spread: z.number().min(0).optional(),
+    attachmentPath: z.string().optional(),
     date: z
       .string()
       .refine((str) => !isNaN(Date.parse(str)), "Invalid date format"),
@@ -83,6 +85,8 @@ export async function POST(req: Request) {
           data: {
             amount: t.amount,
             currency: t.currency,
+            spread: t.spread ?? 0,
+            attachmentPath: t.attachmentPath,
             date: parseISODateTimeString(t.date),
             description: t.description,
             notes: t.notes,

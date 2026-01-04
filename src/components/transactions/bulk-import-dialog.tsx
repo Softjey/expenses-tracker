@@ -28,6 +28,7 @@ const transactionSchema = z.object({
   currency: z
     .string({ required_error: "Currency is required" })
     .length(3, "Currency must be a 3-letter code (e.g. USD)"),
+  spread: z.number().min(0, "Spread must be positive").optional(),
   date: z
     .string({ required_error: "Date is required" })
     .refine((val) => !isNaN(Date.parse(val)), "Invalid date format"),
@@ -51,6 +52,7 @@ const EXAMPLE_JSON = `[
   {
     "amount": 100.50,
     "currency": "PLN",
+    "spread": 0,
     "date": "2024-01-04T12:00:00Z",
     "type": "EXPENSE",
     "categoryName": "Food",
@@ -61,6 +63,7 @@ const EXAMPLE_JSON = `[
   {
     "amount": 5000,
     "currency": "USD",
+    "spread": 2.5,
     "date": "2024-01-01T09:00:00Z",
     "type": "INCOME",
     "categoryName": "Salary",
