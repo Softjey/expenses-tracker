@@ -93,19 +93,21 @@ export function TransactionsClient() {
     string | null
   >(null);
 
+  const defaultValues: z.infer<typeof formSchema> = {
+    amount: 0,
+    currency: "PLN",
+    spread: 0,
+    date: new Date(),
+    description: "",
+    notes: "",
+    categoryId: "",
+    merchantId: "",
+    type: "EXPENSE",
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      amount: 0,
-      currency: "PLN",
-      spread: 0,
-      date: new Date(),
-      description: "",
-      notes: "",
-      categoryId: "",
-      merchantId: "",
-      type: "EXPENSE",
-    },
+    defaultValues,
   });
 
   const type = useWatch({
@@ -131,7 +133,7 @@ export function TransactionsClient() {
       }
       setOpen(false);
       setEditingTransaction(null);
-      form.reset();
+      form.reset(defaultValues);
     } catch (error) {
       console.error("Transaction error:", error);
     }
@@ -153,10 +155,12 @@ export function TransactionsClient() {
     setOpen(true);
   };
 
-  const handleCloseSheet = () => {
-    setOpen(false);
-    setEditingTransaction(null);
-    form.reset();
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setEditingTransaction(null);
+      form.reset(defaultValues);
+    }
   };
 
   if (isLoading) {
@@ -171,7 +175,7 @@ export function TransactionsClient() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Transactions</h2>
-        <Sheet open={open} onOpenChange={handleCloseSheet}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" /> Add Transaction
