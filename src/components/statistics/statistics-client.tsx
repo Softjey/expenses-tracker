@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -71,6 +71,18 @@ export function StatisticsClient() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
+  const [debouncedDateRange, setDebouncedDateRange] = useState<
+    DateRange | undefined
+  >(dateRange);
+
+  useEffect(() => {
+    if (rangeType === "custom") {
+      const timer = setTimeout(() => {
+        setDebouncedDateRange(dateRange);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [dateRange, rangeType]);
 
   const currency = preferences?.preferredCurrency || "PLN";
   const symbol = currencySymbols[currency] || currency;
@@ -80,14 +92,14 @@ export function StatisticsClient() {
     from:
       rangeType === "all"
         ? "all"
-        : dateRange?.from
-        ? toISODateTimeString(dateRange.from)
+        : debouncedDateRange?.from
+        ? toISODateTimeString(debouncedDateRange.from)
         : undefined,
     to:
       rangeType === "all"
         ? undefined
-        : dateRange?.to
-        ? toISODateTimeString(dateRange.to)
+        : debouncedDateRange?.to
+        ? toISODateTimeString(debouncedDateRange.to)
         : undefined,
   });
 
@@ -108,6 +120,7 @@ export function StatisticsClient() {
                 setRangeType(type);
                 if (type !== "all") {
                   setDateRange({ from: range.from, to: range.to });
+                  setDebouncedDateRange({ from: range.from, to: range.to });
                 }
               }}
             />
