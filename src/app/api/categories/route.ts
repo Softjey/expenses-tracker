@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
 
 const categorySchema = z.object({
@@ -10,42 +13,32 @@ const categorySchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   const categories = await prisma.category.findMany({
     where: {
-      user: {
-        email: session.user.email,
-      },
+      userId: user.id,
     },
     orderBy: {
       name: "asc",
     },
   });
 
-  return NextResponse.json(categories);
+  return successResponse(categories);
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
     const body = await req.json();
     const { name, type } = categorySchema.parse(body);
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
 
     const category = await prisma.category.create({
       data: {
@@ -55,17 +48,8 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(category);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: (error as z.ZodError).issues },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(category);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

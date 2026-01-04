@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  notFoundResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
 
 const recurringRuleSchema = z.object({
@@ -29,40 +33,25 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const user = await getSessionUser();
+  if (!user) return unauthorizedResponse();
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     const rule = await prisma.recurringRule.findUnique({
       where: { id },
     });
 
     if (!rule || rule.userId !== user.id) {
-      return new NextResponse("Rule not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Rule not found or unauthorized");
     }
 
     await prisma.recurringRule.delete({
       where: { id },
     });
 
-    return new NextResponse(null, { status: 204 });
+    return successResponse(null, 204);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }
 
@@ -71,32 +60,20 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const user = await getSessionUser();
+  if (!user) return unauthorizedResponse();
 
   try {
     const body = await req.json();
     const { updateMode, ...ruleData } = body;
     const data = recurringRuleSchema.parse(ruleData);
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     const rule = await prisma.recurringRule.findUnique({
       where: { id },
     });
 
     if (!rule || rule.userId !== user.id) {
-      return new NextResponse("Rule not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Rule not found or unauthorized");
     }
 
     // Verify category ownership if changing
@@ -106,9 +83,7 @@ export async function PUT(
       });
 
       if (!category || category.userId !== user.id) {
-        return new NextResponse("Category not found or unauthorized", {
-          status: 400,
-        });
+        return errorResponse("Category not found or unauthorized", 400);
       }
     }
 
@@ -131,7 +106,7 @@ export async function PUT(
         },
       });
 
-      return NextResponse.json(newRule);
+      return successResponse(newRule);
     }
 
     // Default: Update all (in-place)
@@ -142,14 +117,8 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedRule);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ message: error.issues }, { status: 400 });
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(updatedRule);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

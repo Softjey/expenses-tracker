@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -14,23 +14,22 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useCreateMerchant } from "@/hooks/use-merchants";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-})
-
-import type { Merchant } from "@prisma/client"
+});
 
 interface CreateMerchantDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: (merchant: Merchant) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: (merchant: any) => void;
 }
 
 export function CreateMerchantDialog({
@@ -38,28 +37,22 @@ export function CreateMerchantDialog({
   onOpenChange,
   onSuccess,
 }: CreateMerchantDialogProps) {
+  const createMerchant = useCreateMerchant();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const res = await fetch("/api/merchants", {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: { "Content-Type": "application/json" },
-      })
-      if (res.ok) {
-        const merchant = await res.json()
-        onSuccess(merchant)
-        onOpenChange(false)
-        form.reset()
-      }
+      const data = await createMerchant.mutateAsync(values);
+      onSuccess?.(data);
+      onOpenChange(false);
+      form.reset();
     } catch (error) {
-      console.error("Failed to create merchant", error)
+      console.error("Failed to create merchant:", error);
     }
   }
 
@@ -84,12 +77,19 @@ export function CreateMerchantDialog({
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={createMerchant.isPending}
+            >
+              {createMerchant.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Create
             </Button>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

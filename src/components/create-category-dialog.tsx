@@ -26,18 +26,18 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useCreateCategory } from "@/hooks/use-categories";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["EXPENSE", "INCOME"]),
 });
 
-import type { Category } from "@prisma/client";
-
 interface CreateCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (category: Category) => void;
+  onSuccess?: (category: any) => void;
 }
 
 export function CreateCategoryDialog({
@@ -45,6 +45,7 @@ export function CreateCategoryDialog({
   onOpenChange,
   onSuccess,
 }: CreateCategoryDialogProps) {
+  const createCategory = useCreateCategory();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,19 +56,12 @@ export function CreateCategoryDialog({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const res = await fetch("/api/categories", {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        const category = await res.json();
-        onSuccess(category);
-        onOpenChange(false);
-        form.reset();
-      }
+      const data = await createCategory.mutateAsync(values);
+      onSuccess?.(data);
+      onOpenChange(false);
+      form.reset();
     } catch (error) {
-      console.error("Failed to create category", error);
+      console.error("Failed to create category:", error);
     }
   }
 
@@ -116,7 +110,14 @@ export function CreateCategoryDialog({
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={createCategory.isPending}
+            >
+              {createCategory.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Create
             </Button>
           </form>

@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  notFoundResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
 
 const categorySchema = z.object({
@@ -14,41 +18,28 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     // Verify ownership
     const category = await prisma.category.findUnique({
       where: { id },
     });
 
     if (!category || category.userId !== user.id) {
-      return new NextResponse("Category not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Category not found or unauthorized");
     }
 
     await prisma.category.delete({
       where: { id },
     });
 
-    return new NextResponse(null, { status: 204 });
+    return successResponse(null, 204);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }
 
@@ -57,22 +48,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
     const body = await req.json();
     const { name, type } = categorySchema.parse(body);
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
 
     // Verify ownership
     const category = await prisma.category.findUnique({
@@ -80,9 +63,7 @@ export async function PUT(
     });
 
     if (!category || category.userId !== user.id) {
-      return new NextResponse("Category not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Category not found or unauthorized");
     }
 
     const updatedCategory = await prisma.category.update({
@@ -90,17 +71,8 @@ export async function PUT(
       data: { name, type },
     });
 
-    return NextResponse.json(updatedCategory);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: (error as z.ZodError).issues },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(updatedCategory);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

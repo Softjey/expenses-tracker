@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 const transactionSchema = z.object({
   amount: z.number().positive(),
@@ -17,21 +21,19 @@ const transactionSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   const { searchParams } = new URL(req.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const categoryId = searchParams.get("categoryId");
-  const type = searchParams.get("type");
+  const type = searchParams.get("type") as "EXPENSE" | "INCOME" | null;
 
-  const where: any = {
-    user: {
-      email: session.user.email,
-    },
+  const where: Prisma.TransactionWhereInput = {
+    userId: user.id,
   };
 
   if (from && to) {
@@ -60,26 +62,18 @@ export async function GET(req: Request) {
     },
   });
 
-  return NextResponse.json(transactions);
+  return successResponse(transactions);
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
     const body = await req.json();
     const data = transactionSchema.parse(body);
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
 
     const transaction = await prisma.transaction.create({
       data: {
@@ -88,17 +82,8 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(transaction);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: (error as z.ZodError).issues },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(transaction);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

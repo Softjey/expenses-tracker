@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  notFoundResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
 
 const transactionSchema = z.object({
@@ -21,40 +25,27 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     const transaction = await prisma.transaction.findUnique({
       where: { id },
     });
 
     if (!transaction || transaction.userId !== user.id) {
-      return new NextResponse("Transaction not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Transaction not found or unauthorized");
     }
 
     await prisma.transaction.delete({
       where: { id },
     });
 
-    return new NextResponse(null, { status: 204 });
+    return successResponse(null, 204);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }
 
@@ -63,31 +54,21 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const user = await getSessionUser();
+  if (!user) {
+    return unauthorizedResponse();
   }
 
   try {
     const body = await req.json();
     const data = transactionSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     const transaction = await prisma.transaction.findUnique({
       where: { id },
     });
 
     if (!transaction || transaction.userId !== user.id) {
-      return new NextResponse("Transaction not found or unauthorized", {
-        status: 404,
-      });
+      return notFoundResponse("Transaction not found or unauthorized");
     }
 
     const updatedTransaction = await prisma.transaction.update({
@@ -97,17 +78,8 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedTransaction);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: (error as z.ZodError).issues },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(updatedTransaction);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import {
+  getSessionUser,
+  unauthorizedResponse,
+  errorResponse,
+  successResponse,
+} from "@/lib/api-utils";
 import { z } from "zod";
 
 const recurringRuleSchema = z.object({
@@ -25,20 +28,10 @@ const recurringRuleSchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const user = await getSessionUser();
+  if (!user) return unauthorizedResponse();
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
     const rules = await prisma.recurringRule.findMany({
       where: { userId: user.id },
       include: {
@@ -48,32 +41,19 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(rules);
+    return successResponse(rules);
   } catch (error) {
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  const user = await getSessionUser();
+  if (!user) return unauthorizedResponse();
 
   try {
     const body = await req.json();
     const data = recurringRuleSchema.parse(body);
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
 
     // Verify category ownership
     const category = await prisma.category.findUnique({
@@ -81,9 +61,7 @@ export async function POST(req: Request) {
     });
 
     if (!category || category.userId !== user.id) {
-      return new NextResponse("Category not found or unauthorized", {
-        status: 400,
-      });
+      return errorResponse("Category not found or unauthorized", 400);
     }
 
     const rule = await prisma.recurringRule.create({
@@ -93,14 +71,8 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(rule, { status: 201 });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ message: error.issues }, { status: 400 });
-    }
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return successResponse(rule, 201);
+  } catch (error) {
+    return errorResponse(error);
   }
 }

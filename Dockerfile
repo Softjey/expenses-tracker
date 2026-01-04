@@ -15,7 +15,6 @@ COPY . .
 
 # Accept build-time environment variables
 ARG DATABASE_URL
-ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 
 # Generate Prisma Client
@@ -38,12 +37,10 @@ ENV PORT=3000
 
 # Accept build-time environment variables
 ARG DATABASE_URL
-ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 
 # Set runtime environment variables
 ENV DATABASE_URL=${DATABASE_URL}
-ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 
 # Copy necessary files from builder
