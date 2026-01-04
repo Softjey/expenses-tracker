@@ -352,7 +352,19 @@ export function RecurringClient() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* Pending Section */}
-      {(pendingOccurrences.length > 0 || hasSkipped) && (
+      {hasSkipped && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSkipped(!showSkipped)}
+          >
+            {showSkipped ? "Hide Skipped" : "See Skipped"}
+          </Button>
+        </div>
+      )}
+
+      {pendingOccurrences.length > 0 && (
         <Card className="border-orange-200 bg-orange-50/50">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -377,15 +389,6 @@ export function RecurringClient() {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                {hasSkipped && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSkipped(!showSkipped)}
-                  >
-                    {showSkipped ? "Hide Skipped" : "See Skipped"}
-                  </Button>
-                )}
                 {pendingOccurrences.some(
                   (o) => o.status === "OVERDUE" || o.status === "DUE"
                 ) && (
