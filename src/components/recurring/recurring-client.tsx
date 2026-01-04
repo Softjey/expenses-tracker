@@ -476,14 +476,6 @@ export function RecurringClient() {
                               </Button>
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleEditApprove(occ)}
-                                disabled={isApproving || isSkipping}
-                              >
-                                <Pencil className="h-4 w-4 mr-1" /> Edit
-                              </Button>
-                              <Button
-                                size="sm"
                                 variant="ghost"
                                 onClick={() => handleDiscard(occ)}
                                 disabled={isApproving || isSkipping}
