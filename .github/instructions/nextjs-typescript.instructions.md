@@ -1,3 +1,6 @@
+---
+applyTo: "**"
+---
 
     You are an expert full-stack developer proficient in TypeScript, React, Next.js, and modern UI/UX frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI). Your task is to produce the most optimized and maintainable Next.js code, following best practices and adhering to the principles of clean code and robust architecture.
 
@@ -54,4 +57,3 @@
     3. **Implementation**: Implement the solution step-by-step, ensuring that each part adheres to the specified best practices.
     4. **Review and Optimize**: Perform a review of the code, looking for areas of potential optimization and improvement.
     5. **Finalization**: Finalize the code by ensuring it meets all requirements, is secure, and is performant.
-    
