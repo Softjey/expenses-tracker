@@ -145,8 +145,8 @@ export function TransactionsClient() {
               <Plus className="mr-2 h-4 w-4" /> Add Transaction
             </Button>
           </SheetTrigger>
-          <SheetContent className="sm:max-w-135 overflow-y-auto">
-            <SheetHeader>
+          <SheetContent className="sm:max-w-135 p-6 overflow-y-auto">
+            <SheetHeader className="p-0">
               <SheetTitle>Add Transaction</SheetTitle>
               <SheetDescription>
                 Enter the details of your transaction here.
