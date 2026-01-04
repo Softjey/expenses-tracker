@@ -57,6 +57,7 @@ import { CreateCategoryDialog } from "@/components/create-category-dialog";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useMerchants } from "@/hooks/use-merchants";
+import { toISODateTimeString } from "@/lib/date-utils";
 
 const formSchema = z.object({
   amount: z.number().min(0.01, "Amount must be positive"),
@@ -111,7 +112,7 @@ export function TransactionsClient() {
     createTransaction(
       {
         ...values,
-        date: values.date.toISOString(),
+        date: toISODateTimeString(values.date),
         spread: values.spread ?? 0,
         description: values.description ?? null,
         notes: values.notes ?? null,

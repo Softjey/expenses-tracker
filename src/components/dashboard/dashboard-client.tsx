@@ -18,6 +18,7 @@ import {
 import { startOfMonth, endOfMonth } from "date-fns";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
+import { toISODateTimeString } from "@/lib/date-utils";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
@@ -41,8 +42,18 @@ export function DashboardClient() {
 
   const { data, isLoading } = useAnalytics({
     currency,
-    from: rangeType === "all" ? "all" : dateRange.from?.toISOString(),
-    to: rangeType === "all" ? undefined : dateRange.to?.toISOString(),
+    from:
+      rangeType === "all"
+        ? "all"
+        : dateRange.from
+        ? toISODateTimeString(dateRange.from)
+        : undefined,
+    to:
+      rangeType === "all"
+        ? undefined
+        : dateRange.to
+        ? toISODateTimeString(dateRange.to)
+        : undefined,
   });
 
   const symbol = currencySymbols[currency] || currency;

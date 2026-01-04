@@ -30,6 +30,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectLabel,
 } from "@/components/ui/select";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { DatePickerWithRange } from "@/components/date-range-picker";
@@ -40,6 +41,7 @@ import {
 } from "@/components/date-range-selector";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
+import { toISODateTimeString } from "@/lib/date-utils";
 
 const COLORS = [
   "#0088FE",
@@ -76,8 +78,18 @@ export function StatisticsClient() {
 
   const { data, isLoading } = useAnalytics({
     currency,
-    from: rangeType === "all" ? "all" : dateRange?.from?.toISOString(),
-    to: rangeType === "all" ? undefined : dateRange?.to?.toISOString(),
+    from:
+      rangeType === "all"
+        ? "all"
+        : dateRange?.from
+        ? toISODateTimeString(dateRange.from)
+        : undefined,
+    to:
+      rangeType === "all"
+        ? undefined
+        : dateRange?.to
+        ? toISODateTimeString(dateRange.to)
+        : undefined,
   });
 
   const handleCurrencyChange = (val: string) => {
@@ -116,6 +128,7 @@ export function StatisticsClient() {
             }}
           />
           <Select value={currency} onValueChange={handleCurrencyChange}>
+            <SelectLabel>Currency</SelectLabel>
             <SelectTrigger className="w-45">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>

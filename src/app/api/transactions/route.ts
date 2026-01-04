@@ -7,12 +7,13 @@ import {
 } from "@/lib/api-utils";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { parseISODateTimeString } from "@/lib/date-utils";
 
 const transactionSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().length(3),
   spread: z.number().min(0).optional(),
-  date: z.string().transform((str) => new Date(str)),
+  date: z.string().transform((str) => parseISODateTimeString(str)),
   description: z.string().optional(),
   notes: z.string().optional(),
   categoryId: z.string(),
@@ -38,8 +39,8 @@ export async function GET(req: Request) {
 
   if (from && to) {
     where.date = {
-      gte: new Date(from),
-      lte: new Date(to),
+      gte: parseISODateTimeString(from),
+      lte: parseISODateTimeString(to),
     };
   }
 

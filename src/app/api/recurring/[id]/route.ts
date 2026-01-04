@@ -7,6 +7,7 @@ import {
   successResponse,
 } from "@/lib/api-utils";
 import { z } from "zod";
+import { parseISODateTimeString } from "@/lib/date-utils";
 
 const recurringRuleSchema = z.object({
   frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]),
@@ -15,12 +16,12 @@ const recurringRuleSchema = z.object({
   currency: z.string().length(3),
   spread: z.number().min(0).optional(),
   type: z.enum(["EXPENSE", "INCOME"]),
-  startDate: z.string().transform((str) => new Date(str)),
+  startDate: z.string().transform((str) => parseISODateTimeString(str)),
   endDate: z
     .string()
     .optional()
     .nullable()
-    .transform((str) => (str ? new Date(str) : null)),
+    .transform((str) => (str ? parseISODateTimeString(str) : null)),
   categoryId: z.string(),
   merchantId: z.string().optional().nullable(),
   description: z.string().optional(),

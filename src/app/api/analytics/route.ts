@@ -14,6 +14,7 @@ import {
   eachMonthOfInterval,
   format,
 } from "date-fns";
+import { parseISODateTimeString } from "@/lib/date-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +33,8 @@ export async function GET(req: Request) {
     let endDate: Date;
 
     if (fromParam && toParam && fromParam !== "all") {
-      startDate = new Date(fromParam);
-      endDate = new Date(toParam);
+      startDate = parseISODateTimeString(fromParam);
+      endDate = parseISODateTimeString(toParam);
       endDate.setHours(23, 59, 59, 999);
     } else {
       startDate = startOfMonth(new Date());

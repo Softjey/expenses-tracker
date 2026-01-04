@@ -83,6 +83,7 @@ import {
 } from "@/hooks/use-recurring";
 import { useCategories } from "@/hooks/use-categories";
 import { useMerchants } from "@/hooks/use-merchants";
+import { toISODateTimeString } from "@/lib/date-utils";
 
 const formSchema = z.object({
   frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]),
@@ -237,9 +238,9 @@ export function RecurringClient() {
         id: editingRule.id,
         data: {
           ...pendingValues,
-          startDate: pendingValues.startDate.toISOString(),
+          startDate: toISODateTimeString(pendingValues.startDate),
           endDate: pendingValues.endDate
-            ? pendingValues.endDate.toISOString()
+            ? toISODateTimeString(pendingValues.endDate)
             : null,
           spread: pendingValues.spread ?? 0,
           description: pendingValues.description ?? null,
@@ -261,8 +262,8 @@ export function RecurringClient() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const transformedValues = {
       ...values,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate ? values.endDate.toISOString() : null,
+      startDate: toISODateTimeString(values.startDate),
+      endDate: values.endDate ? toISODateTimeString(values.endDate) : null,
       spread: values.spread ?? 0,
       description: values.description ?? null,
       notes: values.notes ?? null,

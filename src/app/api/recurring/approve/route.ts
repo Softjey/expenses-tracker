@@ -7,10 +7,11 @@ import {
   successResponse,
 } from "@/lib/api-utils";
 import { z } from "zod";
+import { parseISODateTimeString } from "@/lib/date-utils";
 
 const approveSchema = z.object({
   ruleId: z.string(),
-  date: z.string().transform((str) => new Date(str)),
+  date: z.string().transform((str) => parseISODateTimeString(str)),
   amount: z.number().positive().optional(),
   description: z.string().optional(),
 });
