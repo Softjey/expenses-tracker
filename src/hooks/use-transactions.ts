@@ -58,11 +58,35 @@ export function useTransactions() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Omit<TransactionWithDetails, "id" | "category" | "merchant">;
+    }) => {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update transaction");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    },
+  });
+
   return {
     ...query,
-    createTransaction: createMutation.mutate,
-    deleteTransaction: deleteMutation.mutate,
+    createTransaction: createMutation.mutateAsync,
+    updateTransaction: updateMutation.mutateAsync,
+    deleteTransaction: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };
 }

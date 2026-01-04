@@ -48,7 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -58,6 +58,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useMerchants } from "@/hooks/use-merchants";
 import { toISODateTimeString } from "@/lib/date-utils";
+import type { TransactionWithDetails } from "@/hooks/use-transactions";
 
 const formSchema = z.object({
   amount: z.number().min(0.01, "Amount must be positive"),
@@ -76,12 +77,16 @@ export function TransactionsClient() {
     data: transactions,
     isLoading,
     createTransaction,
+    updateTransaction,
     deleteTransaction,
   } = useTransactions();
   const { data: categories } = useCategories();
   const { data: merchants } = useMerchants();
 
   const [open, setOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<string | null>(
+    null
+  );
   const [merchantDialogOpen, setMerchantDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [deletingTransactionId, setDeletingTransactionId] = useState<
@@ -108,24 +113,51 @@ export function TransactionsClient() {
     name: "type",
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    createTransaction(
-      {
-        ...values,
-        date: toISODateTimeString(values.date),
-        spread: values.spread ?? 0,
-        description: values.description ?? null,
-        notes: values.notes ?? null,
-        merchantId: values.merchantId ?? null,
-      },
-      {
-        onSuccess: () => {
-          setOpen(false);
-          form.reset();
-        },
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const payload = {
+      ...values,
+      date: toISODateTimeString(values.date),
+      spread: values.spread ?? 0,
+      description: values.description ?? null,
+      notes: values.notes ?? null,
+      merchantId: values.merchantId ?? null,
+    };
+
+    try {
+      if (editingTransaction) {
+        await updateTransaction({ id: editingTransaction, data: payload });
+      } else {
+        await createTransaction(payload);
       }
-    );
+      setOpen(false);
+      setEditingTransaction(null);
+      form.reset();
+    } catch (error) {
+      console.error("Transaction error:", error);
+    }
   }
+
+  const handleEdit = (transaction: TransactionWithDetails) => {
+    setEditingTransaction(transaction.id);
+    form.reset({
+      amount: transaction.amount,
+      currency: transaction.currency,
+      spread: transaction.spread || 0,
+      date: new Date(transaction.date),
+      description: transaction.description || "",
+      notes: transaction.notes || "",
+      categoryId: transaction.categoryId,
+      merchantId: transaction.merchantId || "",
+      type: transaction.type,
+    });
+    setOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setOpen(false);
+    setEditingTransaction(null);
+    form.reset();
+  };
 
   if (isLoading) {
     return (
@@ -139,7 +171,7 @@ export function TransactionsClient() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Transactions</h2>
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet open={open} onOpenChange={handleCloseSheet}>
           <SheetTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" /> Add Transaction
@@ -147,7 +179,9 @@ export function TransactionsClient() {
           </SheetTrigger>
           <SheetContent className="sm:max-w-135 p-6 overflow-y-auto">
             <SheetHeader className="p-0">
-              <SheetTitle>Add Transaction</SheetTitle>
+              <SheetTitle>
+                {editingTransaction ? "Edit Transaction" : "Add Transaction"}
+              </SheetTitle>
               <SheetDescription>
                 Enter the details of your transaction here.
               </SheetDescription>
@@ -189,7 +223,12 @@ export function TransactionsClient() {
                       <FormItem>
                         <FormLabel>Amount</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" {...field} />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -229,7 +268,12 @@ export function TransactionsClient() {
                     <FormItem>
                       <FormLabel>Spread (%)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" {...field} />
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -358,7 +402,7 @@ export function TransactionsClient() {
                   )}
                 />
                 <Button type="submit" className="w-full">
-                  Save Transaction
+                  {editingTransaction ? "Update Transaction" : "Save Transaction"}
                 </Button>
               </form>
             </Form>
@@ -375,7 +419,7 @@ export function TransactionsClient() {
               <TableHead>Merchant</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="w-12.5"></TableHead>
+              <TableHead className="w-25">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -399,13 +443,22 @@ export function TransactionsClient() {
                   {transaction.amount.toFixed(2)} {transaction.currency}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setDeletingTransactionId(transaction.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(transaction)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingTransactionId(transaction.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
