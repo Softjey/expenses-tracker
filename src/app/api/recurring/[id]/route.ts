@@ -90,7 +90,7 @@ export async function PUT(
       }
     }
 
-    if (updateMode === "future") {
+    if (updateMode === "future" || updateMode === "FUTURE") {
       // 1. End current rule
       await prisma.recurringRule.update({
         where: { id },
@@ -117,6 +117,18 @@ export async function PUT(
       where: { id },
       data: {
         ...data,
+      },
+    });
+
+    // Update all linked transactions to reflect the changes (only for "ALL" mode)
+    await prisma.transaction.updateMany({
+      where: { recurringRuleId: id },
+      data: {
+        amount: data.amount,
+        currency: data.currency,
+        spread: data.spread,
+        categoryId: data.categoryId,
+        merchantId: data.merchantId,
       },
     });
 

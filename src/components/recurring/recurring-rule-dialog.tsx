@@ -208,6 +208,7 @@ export function RecurringRuleDialog({
         values.currency !== editingRule.currency ||
         values.frequency !== editingRule.frequency ||
         values.interval !== editingRule.interval ||
+        (values.spread ?? 0) !== (editingRule.spread ?? 0) ||
         values.startDate.getTime() !==
           new Date(editingRule.startDate).getTime();
 
