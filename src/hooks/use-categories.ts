@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface Category {
   id: string;
@@ -27,11 +28,18 @@ export function useCreateCategory() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create category");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create category");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create category");
     },
   });
 }
@@ -44,11 +52,18 @@ export function useDeleteCategory() {
       const res = await fetch(`/api/categories/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete category");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete category");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Category deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete category");
     },
   });
 }

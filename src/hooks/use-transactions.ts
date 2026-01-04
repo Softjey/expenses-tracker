@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface TransactionWithDetails {
   id: string;
@@ -36,12 +37,19 @@ export function useTransactions() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create transaction");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create transaction");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      toast.success("Transaction created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create transaction");
     },
   });
 
@@ -50,11 +58,18 @@ export function useTransactions() {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete transaction");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete transaction");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      toast.success("Transaction deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete transaction");
     },
   });
 
@@ -71,12 +86,19 @@ export function useTransactions() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update transaction");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update transaction");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      toast.success("Transaction updated successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update transaction");
     },
   });
 

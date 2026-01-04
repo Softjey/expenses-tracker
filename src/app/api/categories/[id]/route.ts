@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import {
   getSessionUser,
   unauthorizedResponse,
@@ -37,8 +38,9 @@ export async function DELETE(
       where: { id },
     });
 
-    return successResponse(null, 204);
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
+    console.error("Error deleting category:", error);
     return errorResponse(error);
   }
 }

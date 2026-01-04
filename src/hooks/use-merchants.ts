@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface Merchant {
   id: string;
@@ -26,11 +27,18 @@ export function useCreateMerchant() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create merchant");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create merchant");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["merchants"] });
+      toast.success("Merchant created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create merchant");
     },
   });
 }
@@ -43,11 +51,18 @@ export function useDeleteMerchant() {
       const res = await fetch(`/api/merchants?id=${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete merchant");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete merchant");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["merchants"] });
+      toast.success("Merchant deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete merchant");
     },
   });
 }

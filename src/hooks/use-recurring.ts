@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export type RecurringRule = {
   id: string;
@@ -77,12 +78,19 @@ export function useCreateRecurringRule() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create recurring rule");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create recurring rule");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring-rules"] });
       queryClient.invalidateQueries({ queryKey: ["recurring-occurrences"] });
+      toast.success("Recurring rule created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create recurring rule");
     },
   });
 }
@@ -109,12 +117,19 @@ export function useUpdateRecurringRule() {
           body: JSON.stringify(data),
         }
       );
-      if (!res.ok) throw new Error("Failed to update recurring rule");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update recurring rule");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring-rules"] });
       queryClient.invalidateQueries({ queryKey: ["recurring-occurrences"] });
+      toast.success("Recurring rule updated successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update recurring rule");
     },
   });
 }
@@ -126,12 +141,19 @@ export function useDeleteRecurringRule() {
       const res = await fetch(`/api/recurring/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete recurring rule");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete recurring rule");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring-rules"] });
       queryClient.invalidateQueries({ queryKey: ["recurring-occurrences"] });
+      toast.success("Recurring rule deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete recurring rule");
     },
   });
 }
@@ -150,13 +172,20 @@ export function useApproveOccurrence() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to approve occurrence");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to approve occurrence");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recurring-occurrences"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      toast.success("Occurrence approved successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to approve occurrence");
     },
   });
 }

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,24 +16,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { signIn } from "next-auth/react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-})
+});
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,21 +42,24 @@ export default function LoginPage() {
       email: "",
       password: "",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setError(null)
+    setError(null);
     const result = await signIn("credentials", {
       email: values.email,
       password: values.password,
       redirect: false,
-    })
+    });
 
     if (result?.ok) {
-      router.push("/")
-      router.refresh()
+      toast.success("Logged in successfully");
+      router.push("/");
+      router.refresh();
     } else {
-      setError("Invalid email or password")
+      const message = "Invalid email or password";
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -112,5 +116,5 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
-  )
+  );
 }

@@ -227,7 +227,9 @@ export function TransactionsClient() {
                             type="number"
                             step="0.01"
                             value={field.value || ""}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -272,7 +274,9 @@ export function TransactionsClient() {
                           type="number"
                           step="0.1"
                           value={field.value || ""}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -402,7 +406,9 @@ export function TransactionsClient() {
                   )}
                 />
                 <Button type="submit" className="w-full">
-                  {editingTransaction ? "Update Transaction" : "Save Transaction"}
+                  {editingTransaction
+                    ? "Update Transaction"
+                    : "Save Transaction"}
                 </Button>
               </form>
             </Form>
@@ -500,10 +506,14 @@ export function TransactionsClient() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={async () => {
                 if (deletingTransactionId) {
-                  deleteTransaction(deletingTransactionId);
-                  setDeletingTransactionId(null);
+                  try {
+                    await deleteTransaction(deletingTransactionId);
+                    setDeletingTransactionId(null);
+                  } catch (error) {
+                    console.error("Delete error:", error);
+                  }
                 }
               }}
               className="bg-red-600 hover:bg-red-700"

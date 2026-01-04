@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface UserPreferences {
   preferredCurrency: string;
@@ -25,11 +26,18 @@ export function useUpdatePreferences() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update preferences");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update preferences");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preferences"] });
+      toast.success("Preferences updated successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update preferences");
     },
   });
 }

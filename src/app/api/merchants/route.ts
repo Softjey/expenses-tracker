@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import {
   getSessionUser,
   unauthorizedResponse,
@@ -44,6 +45,37 @@ export async function POST(req: Request) {
 
     return successResponse(merchant);
   } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function DELETE(req: Request) {
+  const user = await getSessionUser();
+  if (!user) return unauthorizedResponse();
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("Merchant ID is required", 400);
+    }
+
+    const merchant = await prisma.merchant.findUnique({
+      where: { id },
+    });
+
+    if (!merchant || merchant.userId !== user.id) {
+      return errorResponse("Merchant not found or unauthorized", 404);
+    }
+
+    await prisma.merchant.delete({
+      where: { id },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting merchant:", error);
     return errorResponse(error);
   }
 }
