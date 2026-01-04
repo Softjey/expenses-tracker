@@ -166,6 +166,7 @@ export function useApproveOccurrence() {
       date: string;
       amount: number;
       description: string;
+      spread?: number;
     }) => {
       const res = await fetch("/api/recurring/approve", {
         method: "POST",

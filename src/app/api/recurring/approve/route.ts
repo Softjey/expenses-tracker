@@ -14,6 +14,7 @@ const approveSchema = z.object({
   date: z.string().transform((str) => parseISODateTimeString(str)),
   amount: z.number().positive().optional(),
   description: z.string().optional(),
+  spread: z.number().min(0).optional(),
 });
 
 export async function POST(req: Request) {
@@ -22,7 +23,8 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { ruleId, date, amount, description } = approveSchema.parse(body);
+    const { ruleId, date, amount, description, spread } =
+      approveSchema.parse(body);
 
     // Fetch the rule
     const rule = await prisma.recurringRule.findUnique({
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
         userId: user.id,
         recurringRuleId: rule.id,
         merchantId: rule.merchantId,
-        spread: rule.spread,
+        spread: spread !== undefined ? spread : rule.spread,
       },
     });
 

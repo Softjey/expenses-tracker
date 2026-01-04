@@ -102,6 +102,7 @@ export function RecurringOccurrencesList() {
                         date: occ.date,
                         amount: occ.amount,
                         description: occ.description,
+                        spread: occ.spread ?? 0,
                       })
                     }
                     disabled={approveOccurrence.isPending}
