@@ -76,7 +76,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       value={value}
       onValueChange={(v) => handleValueChange(v as DateRangeType)}
     >
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-45">
         <SelectValue placeholder="Select range" />
       </SelectTrigger>
       <SelectContent>
