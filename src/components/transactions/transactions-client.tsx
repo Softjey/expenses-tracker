@@ -59,6 +59,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useMerchants } from "@/hooks/use-merchants";
 import { toISODateTimeString } from "@/lib/date-utils";
 import type { TransactionWithDetails } from "@/hooks/use-transactions";
+import { BulkImportDialog } from "./bulk-import-dialog";
 
 const formSchema = z.object({
   amount: z.number().min(0.01, "Amount must be positive"),
@@ -175,61 +176,110 @@ export function TransactionsClient() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Transactions</h2>
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Transaction
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="sm:max-w-135 p-6 overflow-y-auto">
-            <SheetHeader className="p-0">
-              <SheetTitle>
-                {editingTransaction ? "Edit Transaction" : "Add Transaction"}
-              </SheetTitle>
-              <SheetDescription>
-                Enter the details of your transaction here.
-              </SheetDescription>
-            </SheetHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 py-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="EXPENSE">Expense</SelectItem>
-                          <SelectItem value="INCOME">Income</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-2">
+          <BulkImportDialog />
+          <Sheet open={open} onOpenChange={handleOpenChange}>
+            <SheetTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Transaction
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-135 p-6 overflow-y-auto">
+              <SheetHeader className="p-0">
+                <SheetTitle>
+                  {editingTransaction ? "Edit Transaction" : "Add Transaction"}
+                </SheetTitle>
+                <SheetDescription>
+                  Enter the details of your transaction here.
+                </SheetDescription>
+              </SheetHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4 py-4"
+                >
                   <FormField
                     control={form.control}
-                    name="amount"
+                    name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Amount</FormLabel>
+                        <FormLabel>Type</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="EXPENSE">Expense</SelectItem>
+                            <SelectItem value="INCOME">Income</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Amount</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={field.value || ""}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="currency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Currency</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Currency" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="PLN">PLN</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
+                              <SelectItem value="EUR">EUR</SelectItem>
+                              <SelectItem value="GBP">GBP</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="spread"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Spread (%)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            step="0.01"
+                            step="0.1"
                             value={field.value || ""}
                             onChange={(e) =>
                               field.onChange(parseFloat(e.target.value) || 0)
@@ -242,181 +292,138 @@ export function TransactionsClient() {
                   />
                   <FormField
                     control={form.control}
-                    name="currency"
+                    name="date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Currency</FormLabel>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <DateInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            max={new Date()}
+                            min={new Date("1900-01-01")}
+                            placeholder="DD/MM/YYYY"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Category</FormLabel>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => setCategoryDialogOpen(true)}
+                          >
+                            Add New
+                          </Button>
+                        </div>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Currency" />
+                              <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="PLN">PLN</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="GBP">GBP</SelectItem>
+                            {categories
+                              ?.filter((c) => c.type === type)
+                              .map((category) => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="spread"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Spread (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={field.value || ""}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date</FormLabel>
-                      <FormControl>
-                        <DateInput
+                  <FormField
+                    control={form.control}
+                    name="merchantId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Merchant</FormLabel>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => setMerchantDialogOpen(true)}
+                          >
+                            Add New
+                          </Button>
+                        </div>
+                        <Select
+                          onValueChange={field.onChange}
                           value={field.value}
-                          onChange={field.onChange}
-                          max={new Date()}
-                          min={new Date("1900-01-01")}
-                          placeholder="DD/MM/YYYY"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                        <FormLabel>Category</FormLabel>
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => setCategoryDialogOpen(true)}
                         >
-                          Add New
-                        </Button>
-                      </div>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories
-                            ?.filter((c) => c.type === type)
-                            .map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select merchant" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {merchants?.map((merchant) => (
+                              <SelectItem key={merchant.id} value={merchant.id}>
+                                {merchant.name}
                               </SelectItem>
                             ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="merchantId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                        <FormLabel>Merchant</FormLabel>
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="h-auto p-0 text-xs"
-                          onClick={() => setMerchantDialogOpen(true)}
-                        >
-                          Add New
-                        </Button>
-                      </div>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select merchant" />
-                          </SelectTrigger>
+                          <Input {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {merchants?.map((merchant) => (
-                            <SelectItem key={merchant.id} value={merchant.id}>
-                              {merchant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">
-                  {editingTransaction
-                    ? "Update Transaction"
-                    : "Save Transaction"}
-                </Button>
-              </form>
-            </Form>
-          </SheetContent>
-        </Sheet>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">
+                    {editingTransaction
+                      ? "Update Transaction"
+                      : "Save Transaction"}
+                  </Button>
+                </form>
+              </Form>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <div className="rounded-md border">
