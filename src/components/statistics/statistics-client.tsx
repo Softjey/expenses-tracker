@@ -30,7 +30,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectLabel,
 } from "@/components/ui/select";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { DatePickerWithRange } from "@/components/date-range-picker";
@@ -109,15 +108,18 @@ export function StatisticsClient() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Statistics</h1>
         <div className="flex items-center gap-4">
-          <DateRangeSelector
-            value={rangeType}
-            onChange={(type, range) => {
-              setRangeType(type);
-              if (type !== "all") {
-                setDateRange({ from: range.from, to: range.to });
-              }
-            }}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Date Range</label>
+            <DateRangeSelector
+              value={rangeType}
+              onChange={(type, range) => {
+                setRangeType(type);
+                if (type !== "all") {
+                  setDateRange({ from: range.from, to: range.to });
+                }
+              }}
+            />
+          </div>
           <DatePickerWithRange
             date={dateRange}
             setDate={(range) => {
@@ -127,18 +129,20 @@ export function StatisticsClient() {
               }
             }}
           />
-          <Select value={currency} onValueChange={handleCurrencyChange}>
-            <SelectLabel>Currency</SelectLabel>
-            <SelectTrigger className="w-45">
-              <SelectValue placeholder="Select currency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PLN">PLN (złoty)</SelectItem>
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-              <SelectItem value="GBP">GBP (£)</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Currency</label>
+            <Select value={currency} onValueChange={handleCurrencyChange}>
+              <SelectTrigger className="w-45">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PLN">PLN (złoty)</SelectItem>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+                <SelectItem value="GBP">GBP (£)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

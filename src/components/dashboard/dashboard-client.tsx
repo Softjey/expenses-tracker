@@ -111,29 +111,35 @@ export function DashboardClient() {
       </div>
 
       <div className="flex flex-col sm:flex-row justify-end gap-4">
-        <DateRangeSelector
-          value={rangeType}
-          onChange={(type, range) => {
-            setRangeType(type);
-            setDateRange(range);
-          }}
-        />
-        <Select
-          value={currency}
-          onValueChange={(val) =>
-            updatePreferences.mutate({ preferredCurrency: val })
-          }
-        >
-          <SelectTrigger className="w-full sm:w-45">
-            <SelectValue placeholder="Select currency" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PLN">PLN (złoty)</SelectItem>
-            <SelectItem value="USD">USD ($)</SelectItem>
-            <SelectItem value="EUR">EUR (€)</SelectItem>
-            <SelectItem value="GBP">GBP (£)</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Date Range</label>
+          <DateRangeSelector
+            value={rangeType}
+            onChange={(type, range) => {
+              setRangeType(type);
+              setDateRange(range);
+            }}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Currency</label>
+          <Select
+            value={currency}
+            onValueChange={(val) =>
+              updatePreferences.mutate({ preferredCurrency: val })
+            }
+          >
+            <SelectTrigger className="w-full sm:w-45">
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PLN">PLN (złoty)</SelectItem>
+              <SelectItem value="USD">USD ($)</SelectItem>
+              <SelectItem value="EUR">EUR (€)</SelectItem>
+              <SelectItem value="GBP">GBP (£)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
