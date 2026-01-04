@@ -21,6 +21,7 @@ export type RecurringRule = {
   occurrences?: number | null;
   amount: number;
   currency: string;
+  spread?: number | null;
   type: string;
   categoryId: string;
   merchantId: string;
@@ -35,6 +36,7 @@ export type RecurringOccurrence = {
   ruleId: string;
   amount: number;
   currency: string;
+  spread?: number | null;
   description: string;
   merchantId: string;
   merchantName: string;
@@ -141,6 +143,7 @@ export async function getRecurringOccurrences(
           ruleId: rule.id,
           amount: rule.amount,
           currency: rule.currency,
+          spread: rule.spread,
           description: rule.description || `Recurring ${rule.frequency}`,
           merchantId: rule.merchantId,
           merchantName: rule.merchant?.name,
