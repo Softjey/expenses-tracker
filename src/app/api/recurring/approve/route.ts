@@ -46,6 +46,7 @@ export async function POST(req: Request) {
         userId: user.id,
         recurringRuleId: rule.id,
         merchantId: rule.merchantId,
+        spread: rule.spread,
       },
     });
 

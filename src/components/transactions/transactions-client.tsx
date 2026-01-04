@@ -280,9 +280,13 @@ export function TransactionsClient() {
                           <Input
                             type="number"
                             step="0.1"
-                            value={field.value || ""}
+                            value={field.value ?? ""}
                             onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value) || 0)
+                              field.onChange(
+                                e.target.value === ""
+                                  ? 0
+                                  : parseFloat(e.target.value)
+                              )
                             }
                           />
                         </FormControl>
