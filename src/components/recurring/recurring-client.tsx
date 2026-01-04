@@ -78,6 +78,7 @@ import {
   useUpdateRecurringRule,
   useDeleteRecurringRule,
   useApproveOccurrence,
+  useSkipOccurrence,
   RecurringRule,
   RecurringOccurrence,
 } from "@/hooks/use-recurring";
@@ -95,7 +96,7 @@ const formSchema = z.object({
   startDate: z.date(),
   endDate: z.date().optional().nullable(),
   categoryId: z.string().min(1, "Category is required"),
-  merchantId: z.string().optional(),
+  merchantId: z.string().min(1, "Merchant is required"),
   description: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean(),
@@ -112,6 +113,7 @@ export function RecurringClient() {
   const updateRule = useUpdateRecurringRule();
   const deleteRule = useDeleteRecurringRule();
   const approveOccurrence = useApproveOccurrence();
+  const skipOccurrence = useSkipOccurrence();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [merchantDialogOpen, setMerchantDialogOpen] = useState(false);
@@ -122,6 +124,7 @@ export function RecurringClient() {
     typeof formSchema
   > | null>(null);
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
+  const [showSkipped, setShowSkipped] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -176,14 +179,25 @@ export function RecurringClient() {
 
   const handleDiscard = async (occurrence: RecurringOccurrence) => {
     try {
-      await approveOccurrence.mutateAsync({
+      await skipOccurrence.mutateAsync({
         ruleId: occurrence.ruleId,
         date: occurrence.date,
-        amount: 0,
-        description: `SKIPPED: ${occurrence.description}`,
+        action: "skip",
       });
     } catch (error) {
       console.error("Error discarding:", error);
+    }
+  };
+
+  const handleUnskip = async (occurrence: RecurringOccurrence) => {
+    try {
+      await skipOccurrence.mutateAsync({
+        ruleId: occurrence.ruleId,
+        date: occurrence.date,
+        action: "unskip",
+      });
+    } catch (error) {
+      console.error("Error unskipping:", error);
     }
   };
 
@@ -323,8 +337,12 @@ export function RecurringClient() {
   );
 
   const pendingOccurrences = occurrences.filter(
-    (o) => o.status === "OVERDUE" || o.status === "DUE"
+    (o) =>
+      o.status === "OVERDUE" ||
+      o.status === "DUE" ||
+      (showSkipped && o.status === "SKIPPED")
   );
+  const hasSkipped = occurrences.some((o) => o.status === "SKIPPED");
   const upcomingOccurrences = occurrences.filter(
     (o) => o.status === "UPCOMING"
   );
@@ -334,7 +352,7 @@ export function RecurringClient() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       {/* Pending Section */}
-      {pendingOccurrences.length > 0 && (
+      {(pendingOccurrences.length > 0 || hasSkipped) && (
         <Card className="border-orange-200 bg-orange-50/50">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -344,13 +362,42 @@ export function RecurringClient() {
                   Pending Recurring Transactions
                 </CardTitle>
                 <CardDescription>
-                  {pendingOccurrences.length} transaction
-                  {pendingOccurrences.length > 1 ? "s" : ""} need your approval
+                  {pendingOccurrences.filter((o) => o.status !== "SKIPPED")
+                    .length > 0
+                    ? `${
+                        pendingOccurrences.filter((o) => o.status !== "SKIPPED")
+                          .length
+                      } transaction${
+                        pendingOccurrences.filter((o) => o.status !== "SKIPPED")
+                          .length > 1
+                          ? "s"
+                          : ""
+                      } need your approval`
+                    : "No transactions need approval"}
                 </CardDescription>
               </div>
-              <Button onClick={handleApproveAll} variant="default">
-                Approve All
-              </Button>
+              <div className="flex gap-2">
+                {hasSkipped && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSkipped(!showSkipped)}
+                  >
+                    {showSkipped ? "Hide Skipped" : "See Skipped"}
+                  </Button>
+                )}
+                {pendingOccurrences.some(
+                  (o) => o.status === "OVERDUE" || o.status === "DUE"
+                ) && (
+                  <Button
+                    onClick={handleApproveAll}
+                    variant="default"
+                    size="sm"
+                  >
+                    Approve All
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -372,8 +419,17 @@ export function RecurringClient() {
                     approveOccurrence.isPending &&
                     approveOccurrence.variables?.date === occ.date &&
                     approveOccurrence.variables?.ruleId === occ.ruleId;
+                  const isSkipping =
+                    skipOccurrence.isPending &&
+                    skipOccurrence.variables?.date === occ.date &&
+                    skipOccurrence.variables?.ruleId === occ.ruleId;
+                  const isSkipped = occ.status === "SKIPPED";
+
                   return (
-                    <TableRow key={occId}>
+                    <TableRow
+                      key={occId}
+                      className={cn(isSkipped && "opacity-50 bg-muted/50")}
+                    >
                       <TableCell>
                         {format(new Date(occ.date), "MMM d, yyyy")}
                       </TableCell>
@@ -388,7 +444,11 @@ export function RecurringClient() {
                       <TableCell>
                         <Badge
                           variant={
-                            occ.status === "OVERDUE" ? "destructive" : "default"
+                            occ.status === "OVERDUE"
+                              ? "destructive"
+                              : occ.status === "SKIPPED"
+                              ? "secondary"
+                              : "default"
                           }
                         >
                           {occ.status}
@@ -396,35 +456,56 @@ export function RecurringClient() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleApprove(occ)}
-                            disabled={isApproving}
-                          >
-                            {isApproving ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Check className="h-4 w-4 mr-1" /> Approve
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditApprove(occ)}
-                            disabled={isApproving}
-                          >
-                            <Pencil className="h-4 w-4 mr-1" /> Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDiscard(occ)}
-                            disabled={isApproving}
-                          >
-                            Skip
-                          </Button>
+                          {!isSkipped ? (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(occ)}
+                                disabled={isApproving || isSkipping}
+                              >
+                                {isApproving ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Check className="h-4 w-4 mr-1" /> Approve
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditApprove(occ)}
+                                disabled={isApproving || isSkipping}
+                              >
+                                <Pencil className="h-4 w-4 mr-1" /> Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDiscard(occ)}
+                                disabled={isApproving || isSkipping}
+                              >
+                                {isSkipping ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  "Skip"
+                                )}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUnskip(occ)}
+                              disabled={isSkipping}
+                            >
+                              {isSkipping ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Undo Skip"
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -665,7 +746,7 @@ export function RecurringClient() {
                     name="merchantId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Merchant (Optional)</FormLabel>
+                        <FormLabel>Merchant</FormLabel>
                         <Select
                           onValueChange={(value) => {
                             if (value === "_create_new") {
@@ -678,11 +759,10 @@ export function RecurringClient() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select merchant (optional)" />
+                              <SelectValue placeholder="Select merchant" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="_none">None</SelectItem>
                             {merchants.map((merchant) => (
                               <SelectItem key={merchant.id} value={merchant.id}>
                                 {merchant.name}

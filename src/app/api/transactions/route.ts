@@ -17,7 +17,7 @@ const transactionSchema = z.object({
   description: z.string().optional(),
   notes: z.string().optional(),
   categoryId: z.string(),
-  merchantId: z.string().optional(),
+  merchantId: z.string().min(1, "Merchant is required"),
   type: z.enum(["EXPENSE", "INCOME"]),
 });
 

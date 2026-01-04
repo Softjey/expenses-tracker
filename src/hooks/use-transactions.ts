@@ -11,9 +11,9 @@ export interface TransactionWithDetails {
   notes: string | null;
   type: "EXPENSE" | "INCOME";
   categoryId: string;
-  merchantId: string | null;
+  merchantId: string;
   category: { id: string; name: string };
-  merchant: { id: string; name: string } | null;
+  merchant: { id: string; name: string };
 }
 
 export function useTransactions() {

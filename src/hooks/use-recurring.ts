@@ -17,11 +17,11 @@ export type RecurringRule = {
     name: string;
     type: string;
   };
-  merchantId?: string | null;
-  merchant?: {
+  merchantId: string;
+  merchant: {
     id: string;
     name: string;
-  } | null;
+  };
   description?: string | null;
   notes?: string | null;
   isActive: boolean;
@@ -30,14 +30,14 @@ export type RecurringRule = {
 
 export type RecurringOccurrence = {
   date: string;
-  status: "PAID" | "OVERDUE" | "DUE" | "UPCOMING";
+  status: "PAID" | "OVERDUE" | "DUE" | "UPCOMING" | "SKIPPED";
   ruleId: string;
   amount: number;
   currency: string;
   spread?: number;
   description: string;
-  merchantId?: string | null;
-  merchantName?: string | null;
+  merchantId: string;
+  merchantName: string;
   categoryName: string;
   transactionId?: string;
 };
@@ -186,6 +186,41 @@ export function useApproveOccurrence() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to approve occurrence");
+    },
+  });
+}
+
+export function useSkipOccurrence() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      ruleId: string;
+      date: string;
+      action: "skip" | "unskip";
+    }) => {
+      const res = await fetch("/api/recurring/skip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to ${data.action} occurrence`
+        );
+      }
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-occurrences"] });
+      toast.success(
+        `Occurrence ${
+          variables.action === "skip" ? "skipped" : "restored"
+        } successfully`
+      );
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 }

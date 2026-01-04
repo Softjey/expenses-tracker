@@ -22,7 +22,7 @@ const recurringRuleSchema = z.object({
     .nullable()
     .transform((str) => (str ? parseISODateTimeString(str) : null)),
   categoryId: z.string(),
-  merchantId: z.string().optional().nullable(),
+  merchantId: z.string().min(1, "Merchant is required"),
   description: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),

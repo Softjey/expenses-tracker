@@ -23,21 +23,21 @@ export type RecurringRule = {
   currency: string;
   type: string;
   categoryId: string;
-  merchantId?: string | null;
+  merchantId: string;
   description?: string | null;
   category: { name: string };
-  merchant?: { name: string } | null;
+  merchant: { name: string };
 };
 
 export type RecurringOccurrence = {
   date: Date;
-  status: "PAID" | "OVERDUE" | "DUE" | "UPCOMING";
+  status: "PAID" | "OVERDUE" | "DUE" | "UPCOMING" | "SKIPPED";
   ruleId: string;
   amount: number;
   currency: string;
   description: string;
-  merchantId?: string | null;
-  merchantName?: string | null;
+  merchantId: string;
+  merchantName: string;
   categoryName: string;
   transactionId?: string;
 };
@@ -57,19 +57,37 @@ export async function getRecurringOccurrences(
     },
   });
 
+  const allSkipped = await prisma.skippedOccurrence.findMany({
+    where: {
+      ruleId: { in: ruleIds },
+    },
+  });
+
   for (const rule of rules) {
-    // Use UTC parts to avoid timezone shifts when calculating occurrences.
+    // Use UTC noon to avoid timezone shifts and ensure consistency with parseISODateTimeString
     let currentDate = new Date(
-      rule.startDate.getUTCFullYear(),
-      rule.startDate.getUTCMonth(),
-      rule.startDate.getUTCDate()
+      Date.UTC(
+        rule.startDate.getUTCFullYear(),
+        rule.startDate.getUTCMonth(),
+        rule.startDate.getUTCDate(),
+        12,
+        0,
+        0,
+        0
+      )
     );
 
     const end = rule.endDate
       ? new Date(
-          rule.endDate.getUTCFullYear(),
-          rule.endDate.getUTCMonth(),
-          rule.endDate.getUTCDate()
+          Date.UTC(
+            rule.endDate.getUTCFullYear(),
+            rule.endDate.getUTCMonth(),
+            rule.endDate.getUTCDate(),
+            12,
+            0,
+            0,
+            0
+          )
         )
       : rangeEnd;
 
@@ -80,6 +98,8 @@ export async function getRecurringOccurrences(
     const ruleTransactions = allTransactions.filter(
       (t) => t.recurringRuleId === rule.id
     );
+
+    const ruleSkipped = allSkipped.filter((s) => s.ruleId === rule.id);
 
     while (
       (isBefore(currentDate, end) || isSameDay(currentDate, end)) &&
@@ -95,10 +115,14 @@ export async function getRecurringOccurrences(
         (t) => t.date >= searchStart && t.date <= searchEnd
       );
 
+      const isSkipped = ruleSkipped.some((s) => isSameDay(s.date, currentDate));
+
       let status: RecurringOccurrence["status"] = "UPCOMING";
 
       if (existingTransaction) {
         status = "PAID";
+      } else if (isSkipped) {
+        status = "SKIPPED";
       } else if (isBefore(currentDate, today)) {
         status = "OVERDUE";
       } else if (isSameDay(currentDate, today)) {
@@ -108,7 +132,8 @@ export async function getRecurringOccurrences(
       if (
         isAfter(currentDate, subDays(rangeStart, 1)) ||
         status === "OVERDUE" ||
-        status === "DUE"
+        status === "DUE" ||
+        status === "SKIPPED"
       ) {
         occurrences.push({
           date: currentDate,

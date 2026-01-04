@@ -75,8 +75,8 @@ model Transaction {
   recurringRuleId String?
   recurringRule   RecurringRule? @relation(fields: [recurringRuleId], references: [id])
 
-  merchantId String?
-  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,14 +103,25 @@ model RecurringRule {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  merchantId String?
-  merchant   Merchant? @relation(fields: [merchantId], references: [id])
+  merchantId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
 
-  isActive     Boolean       @default(true)
-  transactions Transaction[]
+  isActive           Boolean             @default(true)
+  transactions       Transaction[]
+  skippedOccurrences SkippedOccurrence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SkippedOccurrence {
+  id        String        @id @default(cuid())
+  ruleId    String
+  rule      RecurringRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  date      DateTime
+  createdAt DateTime      @default(now())
+
+  @@unique([ruleId, date])
 }
 
 model Merchant {

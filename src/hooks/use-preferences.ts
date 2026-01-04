@@ -34,7 +34,6 @@ export function useUpdatePreferences() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preferences"] });
-      toast.success("Preferences updated successfully");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update preferences");

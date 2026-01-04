@@ -63,7 +63,7 @@ const formSchema = z.object({
   startDate: z.date(),
   endDate: z.date().optional().nullable(),
   categoryId: z.string().min(1, "Category is required"),
-  merchantId: z.string().optional(),
+  merchantId: z.string().min(1, "Merchant is required"),
   description: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean(),
@@ -170,7 +170,7 @@ export function RecurringRuleDialog({
           spread: pendingValues.spread ?? 0,
           description: pendingValues.description ?? null,
           notes: pendingValues.notes ?? null,
-          merchantId: pendingValues.merchantId ?? null,
+          merchantId: pendingValues.merchantId,
         },
         updateMode: mode,
       });
@@ -191,7 +191,7 @@ export function RecurringRuleDialog({
       spread: values.spread ?? 0,
       description: values.description ?? null,
       notes: values.notes ?? null,
-      merchantId: values.merchantId ?? null,
+      merchantId: values.merchantId,
     };
 
     if (!editingRule) {
@@ -450,7 +450,7 @@ export function RecurringRuleDialog({
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel>Merchant (Optional)</FormLabel>
+                      <FormLabel>Merchant</FormLabel>
                       <Button
                         type="button"
                         variant="link"
@@ -467,7 +467,6 @@ export function RecurringRuleDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
                         {merchants.map((merchant) => (
                           <SelectItem key={merchant.id} value={merchant.id}>
                             {merchant.name}

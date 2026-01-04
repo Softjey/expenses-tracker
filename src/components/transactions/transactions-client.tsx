@@ -68,7 +68,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   notes: z.string().optional(),
   categoryId: z.string().min(1, "Category is required"),
-  merchantId: z.string().optional(),
+  merchantId: z.string().min(1, "Merchant is required"),
   type: z.enum(["EXPENSE", "INCOME"]),
 });
 
@@ -120,7 +120,7 @@ export function TransactionsClient() {
       spread: values.spread ?? 0,
       description: values.description ?? null,
       notes: values.notes ?? null,
-      merchantId: values.merchantId ?? null,
+      merchantId: values.merchantId,
     };
 
     try {
@@ -347,7 +347,7 @@ export function TransactionsClient() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex items-center justify-between">
-                        <FormLabel>Merchant (Optional)</FormLabel>
+                        <FormLabel>Merchant</FormLabel>
                         <Button
                           type="button"
                           variant="link"
@@ -367,7 +367,6 @@ export function TransactionsClient() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
                           {merchants?.map((merchant) => (
                             <SelectItem key={merchant.id} value={merchant.id}>
                               {merchant.name}
